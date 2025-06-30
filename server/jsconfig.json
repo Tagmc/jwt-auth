@@ -1,0 +1,8 @@
+// Author: EmHuyTapCode: https://youtube.com/@EmHuyTapCode
+{
+  "compilerOptions": {
+    "paths": {
+      "~/*": ["./src/*"],
+    },
+  }
+}
