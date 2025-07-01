@@ -29,7 +29,11 @@ const verifyToken = async (token, secretSignature) => {
   }
 };
 
+export const ACCESS_TOKEN_SECRET_SIGNATURE = 'KBgJwUETt4HeVD05WaXXI9V3JnwCVP'
+export const REFRESH_TOKEN_SECRET_SIGNATURE = 'fcCjhnpeopVn2Hg1jG75MUi62051yL'
+
 export const JwtProvider = {
   generateToken,
   verifyToken,
 };
+

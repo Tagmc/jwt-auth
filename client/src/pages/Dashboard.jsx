@@ -4,19 +4,22 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import CircularProgress from "@mui/material/CircularProgress";
 import Divider from "@mui/material/Divider";
-import authorizedauthorizedAxiosInstanceInstance from "~/utils/authorizedauthorizedAxiosInstance";
-import { toast } from "react-toastify";
 import { API_ROOT } from "~/utils/constants";
+import { Button } from "@mui/material";
+import authorizedAxiosInstance from "~/utils/authorizedAxios";
+import { useNavigate } from "react-router-dom";
 
 function Dashboard() {
   const [user, setUser] = useState(null);
+  const navigate = useNavigate()
 
   useEffect(() => {
     const fetchData = async () => {
       const res = await authorizedAxiosInstance.get(
         `${API_ROOT}/v1/dashboards/access`
       );
-      console.log(res.data);
+      const userInfoFromLocalStorage = localStorage.getItem("userInfo");
+
       setUser(res.data);
     };
     fetchData();
@@ -38,6 +41,18 @@ function Dashboard() {
         <Typography>Loading dashboard user...</Typography>
       </Box>
     );
+  }
+
+  const handleLogout = async () => {
+    // Với trường hợp số 1: Dùng localStorage => chỉ cần xoá thông tin user trong localStorage phía fe
+    localStorage.removeItem('accessToken')
+    localStorage.removeItem('refreshToken')
+    localStorage.removeItem('userInfo')
+    // Với trường hợp số 2: Dùng HttpOnly Cookies => gọi API để xử lý remove cookies
+    await authorizedAxiosInstance.delete(`${API_ROOT}/v1/users/logout`)
+    setUser(null)
+    //navigate ve trang login
+    navigate('/login')
   }
 
   return (
@@ -64,7 +79,16 @@ function Dashboard() {
         </Typography>
         &nbsp; đăng nhập thành công thì mới cho truy cập vào.
       </Alert>
-
+      <Button
+        type="button"
+        variant="contained"
+        color="info"
+        size="large"
+        sx={{ mt: 2, maxWidth: "min-content", alignSelf: "flex-end" }}
+        onClick={handleLogout}
+      >
+        Logout
+      </Button>
       <Divider sx={{ my: 2 }} />
     </Box>
   );

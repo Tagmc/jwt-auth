@@ -1,7 +1,7 @@
 
 import { StatusCodes } from 'http-status-codes'
 import ms from 'ms'
-import { JwtProvider } from '~/providers/JwtProvider'
+import { ACCESS_TOKEN_SECRET_SIGNATURE, JwtProvider, REFRESH_TOKEN_SECRET_SIGNATURE } from '~/providers/JwtProvider'
 
 const MOCK_DATABASE = {
   USER: {
@@ -11,8 +11,7 @@ const MOCK_DATABASE = {
   }
 }
 
-const ACCESS_TOKEN_SECRET_SIGNATURE = 'KBgJwUETt4HeVD05WaXXI9V3JnwCVP'
-const REFRESH_TOKEN_SECRET_SIGNATURE = 'fcCjhnpeopVn2Hg1jG75MUi62051yL'
+
 
 const login = async (req, res) => {
   try {
@@ -65,7 +64,9 @@ const login = async (req, res) => {
 
 const logout = async (req, res) => {
   try {
-    // Do something
+    // Xoá cookie - đơn giản là làm ngược lại so với việc gán cookie ở hàm login
+    res.clearCookie('accessToken')
+    res.clearCookie('refreshToken')
     res.status(StatusCodes.OK).json({ message: 'Logout API success!' })
   } catch (error) {
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(error)

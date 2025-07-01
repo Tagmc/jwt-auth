@@ -1,3 +1,5 @@
+//localStorage: thì mình có thể dùng mã js để lấy token ra, hay thao tác với token đó cho nên nếu như chương trình hướng vào lỗi vảo mật XSS thì sẽ bị hack
+// HttpOnly Cookie: thì hacker sẽ không lấy được token ra nếu bị XSS vì js của trình duyệt không thể nào lấy ra hay sủ dụng httpOnlyCookie nhưng httpOnly Cookie nếu vướng lỗi bảo mật csrf cũng sẽ bị mất
 import axios from "axios";
 import { toast } from "react-toastify";
 
@@ -17,7 +19,13 @@ authorizedAxiosInstance.defaults.withCredentials = true
 
 // Add a request interceptor
 authorizedAxiosInstance.interceptors.request.use((config) => {
-    // Do something before request is sent
+    // lấy accessToken từ localStorage và đính kèm vào header
+    const accessToken = localStorage.getItem('accessToken')
+    if (accessToken) {
+      // Cần thêm Bearer vì nên tuân thủ theo tiêu chuẩn OAuth 2.0 trong việc xác định loại token đang sử dụng
+      // Bearer là định nghĩa loại token dành cho việc xác thực và uỷ quyền, tham khảo các loại token khác nhau
+      config.headers.Authorization = `Bearer ${accessToken}`
+    }
     return config;
   }, (error) => {
     // Do something with request error
