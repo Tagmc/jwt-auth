@@ -2,6 +2,7 @@
 // HttpOnly Cookie: thì hacker sẽ không lấy được token ra nếu bị XSS vì js của trình duyệt không thể nào lấy ra hay sủ dụng httpOnlyCookie nhưng httpOnly Cookie nếu vướng lỗi bảo mật csrf cũng sẽ bị mất
 import axios from "axios";
 import { toast } from "react-toastify";
+import { handleLogoutAPI, refreshTokenAPI } from "~/apis";
 
 // Khởi tạo 1 đối tượng axios để config, custom axios
 
@@ -43,8 +44,44 @@ authorizedAxiosInstance.interceptors.response.use((response) => {
     // Any status codes that falls outside the range of 2xx cause this function to trigger
     // Do something with response error
     // Dùng toastify để hiển thị bất kể mọi mã lỗi lên màn hình  - Ngoại trừ mã 410 - GONE - phục vụ tự động refresh lại token
-    if (error.response?.status !== 410) {
-        toast.error(error.response?.data?.message || error?.message)
+
+    // Xử lý refresh token tự động
+    // Nếu như nhận mã 401 từ BE, thì gọi API logout luôn
+    if (error.response?.status === 401) {
+      handleLogoutAPI().then(() => {
+        // Nếu trường hợp dùng cookie thì nhớ xoá userInfo trong localStorage
+        // localStorage.removeItem('userInfo')
+
+        // Điều hướng đến trang login
+        location.href ='/login'
+      })
+    }
+
+    // Xử lý tập trung phần hiển thị thông báo lỗi  trả về mọi API ở đây
+    // Nếu nhận mã 410 từ be, gọi refresh token để làm mới lại accessToken
+    // Lấy các request API bị lỗi thông qua error.config
+    const originalRequest = error.config
+    if (error.response?.status !== 410 && !originalRequest._retry) {
+      // Gán thêm một giá trị _retry luôn = true trong khoảng thời gian chờ, để việc refresh token này chỉ luôn gọi 1 lần 1 thời điểm
+      originalRequest._retry = true
+      // TH1: lấy refreshToken từ localStorage
+      const refreshToken = localStorage.getItem('refreshToken')
+      // Call API refresh tOken, phair return 
+      return refreshTokenAPI(refreshToken).then((res) => {
+        // Lấy và gán lại accessToken vào localStorage (cho trường hơjp localStorage)
+        const {accessToken} = res.data
+        localStorage.setItem('accessToken', accessToken)
+        authorizedAxiosInstance.defaults.headers.Authorization = `Bearer ${accessToken}`
+
+        // Đồng thời lưu ý là accessToken cũng đã được update lại ở Cookie (cho trường hợp cookie) 
+        // bước cuối cùng quan trọng : return lại axios instance kết hợp cái originalRequest để gọi lại những api bị lỗi ban đầu
+        return authorizedAxiosInstance(originalRequest)
+      }).catch((err) => {
+        handleLogoutAPI().then(() => {
+          location.href = '/login'
+        })        
+        return Promise.reject(err)
+      })
     }
     return Promise.reject(error);
   });
